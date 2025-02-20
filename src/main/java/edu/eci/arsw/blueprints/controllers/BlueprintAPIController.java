@@ -8,6 +8,8 @@ package edu.eci.arsw.blueprints.controllers;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,11 +18,16 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * @author hcadavid
  */
+
+@RestController
+@Component
+@RequestMapping(value = "/blueprints")
 public class BlueprintAPIController {
     
+@RequestMapping(method = RequestMethod.GET)
+public ResponseEntity<?> getBlueprints() {
     
-    
-    
-    
+	return ResponseEntity.ok().build();
+}
 }
 

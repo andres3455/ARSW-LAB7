@@ -13,6 +13,7 @@ import edu.eci.arsw.persistence.BlueprintPersistenceException;
 import edu.eci.arsw.persistence.BlueprintsPersistence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -28,6 +29,7 @@ import java.util.Set;
 
 
 @Service
+@Primary
 public class BlueprintsServices {
 
     @Autowired
