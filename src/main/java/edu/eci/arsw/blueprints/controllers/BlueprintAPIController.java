@@ -7,6 +7,10 @@ package edu.eci.arsw.blueprints.controllers;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import edu.eci.arsw.model.Blueprint;
+import edu.eci.arsw.persistence.impl.InMemoryBlueprintPersistence;
+import edu.eci.arsw.services.BlueprintsServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -23,11 +27,14 @@ import org.springframework.web.bind.annotation.RestController;
 @Component
 @RequestMapping(value = "/blueprints")
 public class BlueprintAPIController {
-    
-@RequestMapping(method = RequestMethod.GET)
-public ResponseEntity<?> getBlueprints() {
-    
-	return ResponseEntity.ok().build();
-}
+	InMemoryBlueprintPersistence ibpp = new InMemoryBlueprintPersistence();
+
+	@Autowired
+	private BlueprintsServices blueprintsServices;
+	@RequestMapping(method = RequestMethod.GET)
+	public ResponseEntity<Set<Blueprint>> getBlueprints() {
+		Set<Blueprint> blueprints = blueprintsServices.getAllBlueprints();
+		return ResponseEntity.ok(blueprints);
+	}
 }
 

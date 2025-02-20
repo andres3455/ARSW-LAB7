@@ -36,8 +36,12 @@ public class BlueprintsServices {
     public BlueprintsPersistence bpp;
 
     @Autowired
-    @Qualifier("RedundancyFilter")
+    @Qualifier("redundancyFilter")
     public BlueprintFilter blueprintFilter;
+
+    @Autowired
+    @Qualifier("subsamplingFilter")
+    private BlueprintFilter subsamplingFilter;
 
     private final Map<String , Set<String>> blueprints = new HashMap<>();
 

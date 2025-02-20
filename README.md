@@ -130,3 +130,58 @@ Escriba su análisis y la solución aplicada en el archivo ANALISIS_CONCURRENCIA
 	* En el código, y en las respuestas del archivo de texto, se tuvo en cuenta:
 		* La colección usada en InMemoryBlueprintPersistence no es Thread-safe (se debió cambiar a una con esta condición).
 		* El método que agrega un nuevo plano está sujeta a una condición de carrera, pues la consulta y posterior agregación (condicionada a la anterior) no se realizan de forma atómica. Si como solución usa un bloque sincronizado, se evalúa como R. Si como solución se usaron los métodos de agregación condicional atómicos (por ejemplo putIfAbsent()) de la colección 'Thread-Safe' usada, se evalúa como B.
+# Desarrollo del laboratioio
+
+1. Integre al proyecto base suministrado los Beans desarrollados en el ejercicio anterior. Sólo copie las clases, NO los archivos de configuración. Rectifique que se tenga correctamente configurado el esquema de inyección de dependencias con las anotaciones @Service y @Autowired.
+![](img/1.png)
+
+2. Modifique el bean de persistecia 'InMemoryBlueprintPersistence' para que por defecto se inicialice con al menos otros tres planos, y con dos asociados a un mismo autor. <br />
+    <br>
+    Se crearon 4 planos en total de la siguiente manera:
+    ```java
+     public InMemoryBlueprintPersistence() {
+        // load stub data
+        Point[] pts = new Point[] { new Point(140, 140), new Point(115, 115) };
+        Blueprint bp = new Blueprint("Pedro", "Plano 1", pts);
+        Point[] pts2 = new Point[] { new Point(120, 120), new Point(80, 80)};
+        Blueprint bp2 = new Blueprint("Pedro", "Plano 2", pts2);
+        Point[] pts3 = new Point[] { new Point(100, 100), new Point(60, 60)};
+        Blueprint bp3 = new Blueprint("Juan", "Plano 3", pts3);
+        Point[] pts4 = new Point[] { new Point(80, 80), new Point(40, 40)};
+        Blueprint bp4 = new Blueprint("Juan", "Plano4", pts4);
+        blueprints.put(new Tuple<>(bp.getAuthor(), bp.getName()), bp);
+        blueprints.put(new Tuple<>(bp2.getAuthor(), bp2.getName()), bp2);
+        blueprints.put(new Tuple<>(bp3.getAuthor(), bp3.getName()), bp3);
+        blueprints.put(new Tuple<>(bp4.getAuthor(), bp4.getName()), bp4);
+
+    }
+     ```
+3. Configure su aplicación para que ofrezca el recurso "/blueprints", de manera que cuando se le haga una petición GET, retorne -en formato jSON- el conjunto de todos los planos. Para esto:
+
+    * Modifique la clase BlueprintAPIController teniendo en cuenta el siguiente ejemplo de controlador REST hecho con SpringMVC/SpringBoot:
+
+   ```java
+    @RestController
+    @Component
+    @RequestMapping(value = "/blueprints")
+    public class BlueprintAPIController {
+      InMemoryBlueprintPersistence ibpp = new InMemoryBlueprintPersistence();
+      private BlueprintsServices blueprintsServices;
+			
+      @RequestMapping(method = RequestMethod.GET)
+      public ResponseEntity<String> getBlueprints() { 
+         blueprintsServices = new BlueprintsServices();
+         blueprintsServices.bpp = ibpp;
+         Set< Blueprint > blueprints = blueprintsServices.getAllBlueprints();
+         return ResponseEntity.ok("Planos cargados: " + blueprints);
+      }
+   }
+   ```
+* Haga que en esta misma clase se inyecte el bean de tipo BlueprintServices (al cual, a su vez, se le inyectarán sus dependencias de persisntecia y de filtrado de puntos).
+
+4. Verificando el comportamiento con maven: 
+![](img/2.png)
+![](img/3.png)
+
+
+   Y luego enviando una petición GET a: http://localhost:8080/blueprints. Rectifique que, como respuesta, se obtenga un objeto jSON con una lista que contenga el detalle de los planos suministados por defecto, y que se haya aplicado el filtrado de puntos correspondiente.
