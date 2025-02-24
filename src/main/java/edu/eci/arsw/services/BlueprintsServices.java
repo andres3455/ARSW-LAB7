@@ -61,9 +61,22 @@ public class BlueprintsServices {
      * @return the blueprint of the given name created by the given author
      * @throws BlueprintNotFoundException if there is no such blueprint
      */
-    public Blueprint getBlueprint(String author,String name) throws BlueprintNotFoundException {
-        return blueprintFilter.filterBlueprint(bpp.getBlueprint(author, name));
+    public Blueprint getBlueprint(String author, String name) throws BlueprintNotFoundException {
+        try {
+            Blueprint blueprint = bpp.getBlueprint(author, name);
+            
+            if (blueprint == null) {
+                throw new BlueprintNotFoundException("No se encontró el plano '" + name + "' del autor '" + author + "'");
+            }
+    
+            return blueprintFilter.filterBlueprint(blueprint);
+        } catch (BlueprintNotFoundException e) {
+            throw new BlueprintNotFoundException("No se encontró el plano '" + name + "' del autor '" + author + "'");
+        } catch (Exception e) {
+            throw new RuntimeException("Error al obtener el plano: " + e.getMessage(), e);
+        }
     }
+    
     
     /**
      * 
@@ -74,4 +87,6 @@ public class BlueprintsServices {
     public Set<Blueprint> getBlueprintsByAuthor(String author) throws BlueprintNotFoundException{
         return blueprintFilter.filterBlueprints(bpp.getBlueprintsByAuthor(author));
     }
+
+
 }
