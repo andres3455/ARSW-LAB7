@@ -88,5 +88,27 @@ public class BlueprintsServices {
         return blueprintFilter.filterBlueprints(bpp.getBlueprintsByAuthor(author));
     }
 
+    /**
+    * @param author blueprint's author
+    *@param bpname blueprint´s name
+    *@param updateblueprint blueprint´s update
+    
+     * @return all the blueprints of the given author
+     * @throws BlueprintNotFoundException if the given author doesn't exist
+     */
+    public void updateBlueprint(String author, String bpname, Blueprint updatedBlueprint) throws BlueprintNotFoundException {
+        // Buscar el blueprint
+        Blueprint blueprint = bpp.getBlueprint(author, bpname);
+    
+        if (blueprint == null) {
+            throw new BlueprintNotFoundException("No se encontró el plano '" + bpname + "' del autor '" + author + "'");
+        }
+    
+        // Actualizar los puntos del blueprint
+        blueprint.setPoints(updatedBlueprint.getPoints());
+    
+        bpp.updateBluePrint(author, bpname, blueprint);
+    }
+    
 
 }
