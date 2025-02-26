@@ -130,8 +130,10 @@ Escriba su análisis y la solución aplicada en el archivo ANALISIS_CONCURRENCIA
 	* En el código, y en las respuestas del archivo de texto, se tuvo en cuenta:
 		* La colección usada en InMemoryBlueprintPersistence no es Thread-safe (se debió cambiar a una con esta condición).
 		* El método que agrega un nuevo plano está sujeta a una condición de carrera, pues la consulta y posterior agregación (condicionada a la anterior) no se realizan de forma atómica. Si como solución usa un bloque sincronizado, se evalúa como R. Si como solución se usaron los métodos de agregación condicional atómicos (por ejemplo putIfAbsent()) de la colección 'Thread-Safe' usada, se evalúa como B.
-# Desarrollo del laboratioio
 
+# Desarrollo del laboratorio
+
+## Parte 1
 1. Integre al proyecto base suministrado los Beans desarrollados en el ejercicio anterior. Sólo copie las clases, NO los archivos de configuración. Rectifique que se tenga correctamente configurado el esquema de inyección de dependencias con las anotaciones @Service y @Autowired.
 ![](img/1.png)
 
@@ -185,3 +187,94 @@ Escriba su análisis y la solución aplicada en el archivo ANALISIS_CONCURRENCIA
 
 
    Y luego enviando una petición GET a: http://localhost:8080/blueprints. Rectifique que, como respuesta, se obtenga un objeto jSON con una lista que contenga el detalle de los planos suministados por defecto, y que se haya aplicado el filtrado de puntos correspondiente.
+
+![](img/4.png)
+
+5. Se modifcia el controlador para que acepte peticiones GET al recurso /blueptrint/author
+
+```java
+@RequestMapping("/blueprints")
+    public ResponseEntity<Set<Blueprint>> getBlueprints() {
+        Set<Blueprint> blueprints = blueprintsServices.getAllBlueprints();
+        return ResponseEntity.ok(blueprints);
+    }
+
+    @RequestMapping("/blueprints/{author}")
+    public ResponseEntity<?> getBlueprintsByAuthor(@PathVariable String author) throws BlueprintNotFoundException {
+        Set<Blueprint> blueprints = blueprintsServices.getBlueprintsByAuthor(author);
+        if (blueprints == null || blueprints.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron planos del autor:" + author);
+        }
+        return ResponseEntity.ok(blueprints);
+    }
+```
+![](img/5.png)
+
+![](img/8.png)
+
+6. Se modifica el controlador para que acepte peticiones GET, ahora apuntando al recurso /blueprints/author/bpname, se añade ahora el nombre del plano asociado a ese autor, de ser erroneo, se manejara un mensaje de error
+
+![](img/6.png)
+
+![](img/7.png)
+
+![](img/9.png)
+
+
+## PARTE 2
+
+1. Se maneja la posibilida de realizar peticiones POST, para que podamos agregar nuevos planos, en este caso utilizaremos POSTMAN , como el cliente , enviando contenido a la petición y apuntando al recurso especifico 
+
+```java
+@PostMapping("/planos")
+    public ResponseEntity<?> addNewBluePrint(@RequestBody Blueprint blueprint) {
+        try {
+            blueprintsServices.addNewBlueprint(blueprint);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Plano creado Exitosamente");
+        } catch (BlueprintPersistenceException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al crear el plano");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error interno del servidor" + e.getMessage());
+        }
+
+    }
+```
+
+2. Se hace la prueba con el comando
+
+```
+$ curl -i -X POST -HContent-Type:application/json -HAccept:application/json http://URL_del_recurso_ordenes -d '{ObjetoJSON}'
+```
+
+![](img/10.png)
+
+3. realizamos la peticion GET a ese nuevo plano con autor que hemos creado
+
+![](img/11.png)
+
+Otra prueba
+
+![](img/12.png)
+
+4. Manejamos el verbo PUT, para poder actualizar un plano ya existente
+
+```java
+@PutMapping("/blueprints/{author}/{bpname}")
+    public ResponseEntity<?> updateBluePrint(@PathVariable String author, @PathVariable String bpname,@RequestBody Blueprint updBlueprint){
+        try{
+            blueprintsServices.updateBlueprint(author, bpname, updBlueprint);
+            return ResponseEntity.ok("Plano actualizado correctamente ");
+        }catch(BlueprintNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nop se encontro el plano" + bpname + "del autor" + author);
+        }catch(Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al actualizar el plano");
+        }
+    }
+
+```
+Prueba con POSTMAN y en el navegador
+
+![](img/13.png)
+
