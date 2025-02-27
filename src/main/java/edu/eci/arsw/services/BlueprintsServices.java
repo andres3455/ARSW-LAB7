@@ -1,10 +1,4 @@
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package edu.eci.arsw.services;
-
 
 import edu.eci.arsw.filters.BlueprintFilter;
 import edu.eci.arsw.model.Blueprint;
@@ -16,99 +10,65 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
-
-/**
- *
- * @author hcadavid
- */
-
-
-
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Service
 @Primary
 public class BlueprintsServices {
 
     @Autowired
-    public BlueprintsPersistence bpp;
+    private BlueprintsPersistence bpp;
 
     @Autowired
     @Qualifier("redundancyFilter")
-    public BlueprintFilter blueprintFilter;
+    private BlueprintFilter blueprintFilter;
 
-    @Autowired
-    @Qualifier("subsamplingFilter")
-    private BlueprintFilter subsamplingFilter;
-
-    private final Map<String , Set<String>> blueprints = new HashMap<>();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public void addNewBlueprint(Blueprint blueprint) throws BlueprintPersistenceException {
-        bpp.saveBlueprint(blueprint);
-        
-    }
-    
-    public Set<Blueprint> getAllBlueprints(){
-        return bpp.getAllBlueprints();
+        lock.writeLock().lock();
+        try {
+            bpp.saveBlueprint(blueprint);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
-    /**
-     * 
-     * @param author blueprint's author
-     * @param name blueprint's name
-     * @return the blueprint of the given name created by the given author
-     * @throws BlueprintNotFoundException if there is no such blueprint
-     */
+    public Set<Blueprint> getAllBlueprints() {
+        lock.readLock().lock();
+        try {
+            return bpp.getAllBlueprints();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
     public Blueprint getBlueprint(String author, String name) throws BlueprintNotFoundException {
+        lock.readLock().lock();
         try {
             Blueprint blueprint = bpp.getBlueprint(author, name);
-            
-            if (blueprint == null) {
-                throw new BlueprintNotFoundException("No se encontró el plano '" + name + "' del autor '" + author + "'");
-            }
-    
             return blueprintFilter.filterBlueprint(blueprint);
-        } catch (BlueprintNotFoundException e) {
-            throw new BlueprintNotFoundException("No se encontró el plano '" + name + "' del autor '" + author + "'");
-        } catch (Exception e) {
-            throw new RuntimeException("Error al obtener el plano: " + e.getMessage(), e);
+        } finally {
+            lock.readLock().unlock();
         }
     }
-    
-    
-    /**
-     * 
-     * @param author blueprint's author
-     * @return all the blueprints of the given author
-     * @throws BlueprintNotFoundException if the given author doesn't exist
-     */
-    public Set<Blueprint> getBlueprintsByAuthor(String author) throws BlueprintNotFoundException{
-        return blueprintFilter.filterBlueprints(bpp.getBlueprintsByAuthor(author));
+
+    public Set<Blueprint> getBlueprintsByAuthor(String author) throws BlueprintNotFoundException {
+        lock.readLock().lock();
+        try {
+            return blueprintFilter.filterBlueprints(bpp.getBlueprintsByAuthor(author));
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
-    /**
-    * @param author blueprint's author
-    *@param bpname blueprint´s name
-    *@param updateblueprint blueprint´s update
-    
-     * @return all the blueprints of the given author
-     * @throws BlueprintNotFoundException if the given author doesn't exist
-     */
     public void updateBlueprint(String author, String bpname, Blueprint updatedBlueprint) throws BlueprintNotFoundException {
-        // Buscar el blueprint
-        Blueprint blueprint = bpp.getBlueprint(author, bpname);
-    
-        if (blueprint == null) {
-            throw new BlueprintNotFoundException("No se encontró el plano '" + bpname + "' del autor '" + author + "'");
+        lock.writeLock().lock();
+        try {
+            bpp.updateBluePrint(author, bpname, updatedBlueprint);
+        } finally {
+            lock.writeLock().unlock();
         }
-    
-        // Actualizar los puntos del blueprint
-        blueprint.setPoints(updatedBlueprint.getPoints());
-    
-        bpp.updateBluePrint(author, bpname, blueprint);
     }
-    
-
 }

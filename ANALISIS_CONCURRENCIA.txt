@@ -1,0 +1,31 @@
+Análisis de Concurrencia en BlueprintsRESTAPI
+
+Identificación de Condiciones de Carrera
+
+El sistema BlueprintsRESTAPI atiende múltiples peticiones concurrentes mediante múltiples hilos, lo que puede generar condiciones de carrera en el acceso a los datos almacenados en la implementación InMemoryBlueprintPersistence. Se identifican los siguientes problemas potenciales:
+
+Acceso concurrente a la estructura de datos: El almacenamiento de los blueprints se basa en un HashMap no sincronizado. Si dos hilos acceden simultáneamente para modificarlo (agregar, actualizar o eliminar blueprints), pueden producirse inconsistencias o excepciones.
+
+Condición de carrera en la verificación y adición de blueprints: La operación saveBlueprint() primero verifica si el blueprint existe y luego lo agrega si no está presente. Si dos hilos ejecutan esta operación simultáneamente, podría darse una situación donde ambos validen la ausencia del blueprint y luego intenten insertarlo, causando una duplicación de datos o una excepción inesperada.
+
+Actualización concurrente de un blueprint: En la operación updateBlueprint(), se obtiene un blueprint, se modifican sus datos y luego se vuelve a almacenar. Si dos hilos actualizan simultáneamente el mismo blueprint, se pueden perder cambios.
+
+Regiones Críticas Identificadas
+
+Acceso y modificación del HashMap en las operaciones saveBlueprint(), updateBlueprint() y getBlueprintsByAuthor().
+
+Modificaciones sobre objetos Blueprint dentro de updateBlueprint().
+
+
+Solución Aplicada
+
+Para evitar bloqueos innecesarios que degraden el rendimiento, se aplicaron las siguientes estrategias:
+
+Uso de ConcurrentHashMap: Se reemplazó el HashMap por un ConcurrentHashMap, que permite operaciones de lectura concurrentes y minimiza bloqueos en escrituras.
+
+Uso de computeIfAbsent() para saveBlueprint(): En lugar de verificar y luego agregar manualmente, se usa computeIfAbsent(), garantizando que sólo un hilo agregue un blueprint si no existía previamente.
+
+Uso de compute() para updateBlueprint(): En lugar de leer, modificar y escribir, se usa compute(), asegurando que la actualización sea atómica y evitando condiciones de carrera.
+
+Uso de copias inmutables para consultas: En getAllBlueprints() y getBlueprintsByAuthor(), se retorna una copia inmutable del conjunto de blueprints para evitar inconsistencias causadas por modificaciones concurrentes.
+
