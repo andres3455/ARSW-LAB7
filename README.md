@@ -4,8 +4,8 @@
 
 ## LABORATORIO DESARROLLADO POR:
 
-Andres Felipe Rodriguez Chaparro
-Santiago Guerra
+* Andres Felipe Rodriguez Chaparro
+* Santiago Guerra
 
 
 
