@@ -2,6 +2,11 @@
 
 ### Arquitecturas de Software
 
+## LABORATORIO DESARROLLADO POR:
+
+Andres Felipe Rodriguez Chaparro
+Santiago Guerra
+
 
 
 #### API REST para la gestión de planos.
