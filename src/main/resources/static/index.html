@@ -20,7 +20,14 @@
 
     <h1>Blueprints</h1>
     
-    <input type = "text" id = "autor" placeholder = "Autor" required />
+    <label for="author">Nombre del autor:</label>
+    <input type="text" id="author" placeholder="Ingresa el nombre del autor">
+
+    <!-- Botón de 'Get blueprints' -->
+    <button onclick="getBlueprints()">Get Blueprints</button>
+
+    <!-- Campo para mostrar los resultados de la consulta -->
+    <div id="result" class="result"></div>
     </div>
 </body>
 </html>
