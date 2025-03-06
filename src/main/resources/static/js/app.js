@@ -73,7 +73,7 @@ var app = (function(){
         }
     }
 
-    function initCanvas(){
+    function initcanvas(){
         var offset  = getOffset(canvas);
         if(window.PointerEvent) {
             canvas.addEventListener("pointerdown", function(event){
@@ -136,7 +136,7 @@ var app = (function(){
 
     return{
         setAuthorName: setAuthorName,
-        initCanvas: initCanvas,
+        initcanvas: initcanvas,
         createNewBlueprint: createNewBlueprint,
         deleteBlueprint: deleteBlueprint
     }
