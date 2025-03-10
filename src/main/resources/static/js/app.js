@@ -1,143 +1,89 @@
 var app = (function(){
 
     var author = "";
-    var blueprintName = "";
     var blueprints = [];
-    var currentCanvasPoints = [];
-    var canvas = document.getElementById("canvas");
-    var ctx = canvas.getContext("2d");
-    var apiFunction = apiclient;
-    var newBlueprintInProgress = false;
+    var canvas;
+    var ctx;
+    var apiFunction = apimock;
 
-    function setAuthorName(author) {
-        author = author;
+    function setAuthorName(authorName) {
+        author = authorName;
     }
-
-
-    function drawBlueprint() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.beginPath();
-        currentCanvasPoints.forEach(function (point, index) {
-            if (index === 0) {
-                ctx.moveTo(point.x, point.y);
-            } else {
-                ctx.lineTo(point.x, point.y);
-            }
-        });
-        ctx.stroke();
-    }   
 
     function updateBlueprintTable() {
         $("#blueprint-table tbody").empty();
-        blueprints.map(function (blueprint) {
-            var newRow = "<tr><td>" + blueprint.name + "</td><td>" + blueprint.points.length  + "</td><td><button id=" + encodeURIComponent(blueprint.name) + " onclick='app.getBlueprintsByAuthorAndName(this)'>Open</button></td></tr>";
+        blueprints.forEach(blueprint => {
+            let newRow = `<tr>
+                            <td>${blueprint.name}</td>
+                            <td>${blueprint.points.length}</td>
+                            <td><button id="${encodeURIComponent(blueprint.name)}" onclick="app.getBlueprintsByAuthorAndName(this)">Open</button></td>
+                          </tr>`;
             $("#blueprint-table tbody").append(newRow);
         });
-        var totalPoints = blueprints.reduce(function (accumulator, blueprint) {
-            return accumulator + blueprint.points.length;
-        }, 0);
-        $("#total-points").text("Total user points: " + totalPoints);
+        
+        let totalPoints = blueprints.reduce((acc, blueprint) => acc + blueprint.points.length, 0);
+        $("#total-points").text(`Total user points: ${totalPoints}`);
     }
 
-    function clear(){
-        clearCanvas();
-        $("#author-content").text("Author Name");
-        $("#total-points").text("Total user points: ");
-        $("#blueprint-table tbody").empty();
-        $("#blueprint-name").text("Blueprint Name");
-        $("#title-newData").text("");
-        $("#blueprint-name-display").text("");
-        $("#blueprint-info").text("");
-    }
-
-    function clearCanvas(){
+    function clearCanvas() {
+        if (!canvas) {
+            canvas = document.getElementById("canvas");
+            ctx = canvas.getContext("2d");
+        }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        currentCanvasPoints = [];
-        blueprintName = "";
-        newBlueprintInProgress = false;
     }
 
-    function createNewBlueprint() {
+    function getBlueprintsByAuthor() {
         clearCanvas();
-        if (author === '') {
-            alert("You have not selected an author");
+        author = $("#author").val().trim();
+        if (!author) {
+            alert("Please enter an author name.");
             return;
         }
-        blueprintName = prompt("Enter the name of the new blueprint:");
-        if (blueprintName !== null && blueprintName !== "") {
-            newBlueprintInProgress = true;
-            $("#title-newData").text("New Blueprint Data:");
-            $("#blueprint-name-display").text("Blueprint Name: " + blueprintName);
-            $("#blueprint-info").text("You can add points to the new plane using the Canvas. When finished, click the Save/Update button.");
-            $("#blueprint-name").text(blueprintName);
-        }
-    }
-
-    function initcanvas(){
-        var offset  = getOffset(canvas);
-        if(window.PointerEvent) {
-            canvas.addEventListener("pointerdown", function(event){
-                if(blueprintName != "" ){
-                    var x = event.pageX - offset.left;
-                    var y = event.pageY - offset.top;
-                    currentCanvasPoints.push({ x: x, y: y });
-                    drawBlueprint();
-                }
-            });
-        } else {
-            canvas.addEventListener("mousedown", function(event){
-                if(blueprintName != ""){
-                    var x = event.pageX - offset.left;
-                    var y = event.pageY - offset.top;
-                    currentCanvasPoints.push({ x: x, y: y });
-                    drawBlueprint();
-                }
-            });
-        }
-    }
-
-    function createNewBlueprint() {
-        clearCanvas();
-        if (author === '') {
-            alert("You have not selected an author");
-            return;
-        }
-        blueprintName = prompt("Enter the name of the new blueprint:");
-        if (blueprintName !== null && blueprintName !== "") {
-            newBlueprintInProgress = true;
-            $("#title-newData").text("New Blueprint Data:");
-            $("#blueprint-name-display").text("Blueprint Name: " + blueprintName);
-            $("#blueprint-info").text("You can add points to the new plane using the Canvas. When finished, click the Save/Update button.");
-            $("#blueprint-name").text(blueprintName);
-        }
-    }
-    function deleteBlueprint() {
-        if (blueprintName == "" || author == "" ) {
-            alert("Author or Blueprint not selected!");
-            return;
-        }
-        apiFunction.deleteBlueprint(author, blueprintName)
-            .then(function () {
-                return apiFunction.getBlueprintsByAuthor(author);
-            })
-            .then(function (newBlueprints) {
-                blueprints = newBlueprints.map(function (blueprint) {
-                    return { name: blueprint.name, points: blueprint.points };
-                });
-                clear();
+        $("#blueprint-table tbody").empty();
+        $("#author-content").text(`${author}'s blueprints:`);
+        
+        apiFunction.getBlueprintsByAuthor(author, function (data) {
+            if (data && data.length) {
+                blueprints = data.map(bp => ({ name: bp.name, points: bp.points }));
                 updateBlueprintTable();
-                alert("Plano eliminado exitosamente.");
-            })
-            .catch(function (error) {
-                console.error("Error al eliminar el plano:", error);
-                alert("Error al eliminar el plano.");
-            });
+            } else {
+                alert("El Autor no fue encontrado.");
+                blueprints = [];
+                updateBlueprintTable();
+            }
+        });
     }
 
-    return{
-        setAuthorName: setAuthorName,
-        initcanvas: initcanvas,
-        createNewBlueprint: createNewBlueprint,
-        deleteBlueprint: deleteBlueprint
+    function drawBlueprint(blueprint) {
+        clearCanvas();
+        if (!blueprint.points || !blueprint.points.length) {
+            alert("No points found for this blueprint.");
+            return;
+        }
+        ctx.beginPath();
+        blueprint.points.forEach((point, index) => {
+            index === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y);
+        });
+        ctx.stroke();
+        $("#blueprint-name").text(blueprint.name);
     }
+
+    function getBlueprintsByAuthorAndName(selectedBp) {
+        author = $("#author").val().trim();
+        if (!author) {
+            alert("Please enter an author name first.");
+            return;
+        }
+        let blueprintName = decodeURIComponent(selectedBp.id);
+        apiFunction.getBlueprintsByNameAndAuthor(author, blueprintName, function (data) {
+            data ? drawBlueprint(data) : alert("El plano no fue encontrado.");
+        });
+    }
+
+    return {
+        getBlueprintsByAuthor,
+        getBlueprintsByAuthorAndName,
+        setAuthorName
+    };
 })();
