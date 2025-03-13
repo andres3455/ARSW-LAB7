@@ -39,9 +39,15 @@
                 <tbody></tbody>
             </table>
         
-            <div class="text-center ">
-                <h3 id="blueprint-name" class="cust">Blueprint Canvas</h3>
-                <canvas id="canvas" width="500" height="500" class="border border-dark mt-3"></canvas>
+                <div class="text-center ">
+                    <h3 id="blueprint-name" class="cust">Blueprint Canvas</h3>
+                    <canvas id="canvas" width="500" height="500" class="border border-dark mt-3"></canvas>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn custom-save" onclick="app.saveBlueprint()">Save</button>
+                        <button type="button" class="btn custom-update" onclick="app.updateBlueprint()">Update</button>
+                        <button type="button" class="btn custom-delete" onclick="app.deleteBlueprint()">Eliminar</button>                       
+                    </div>
+                </div>
                 </div>
             </div>
         </div>
