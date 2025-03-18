@@ -22,8 +22,19 @@ apimock=(function(){
             callback(
                 mockdata[authname].find(function(e){return e.name===bpname})
             );
+        },
+
+        createBlueprint: function (newBlueprint, callback) {
+            if (!mockdata[newBlueprint.author]) {
+                mockdata[newBlueprint.author] = [];
+            }
+            mockdata[newBlueprint.author].push(newBlueprint);
+            callback(mockdata[newBlueprint.author]); // Se llama al callback con los datos actualizados
         }
+        
     }
+
+    
 
 })();
 

@@ -24,6 +24,10 @@
             </div>
             <h5 id="author-content" class="text-muted text-center">Author Name</h5>
             <h5 id="total-points" class="custom-result text-center">Total user points:</h5>
+            <button type="button" class="btn btn-warning" onClick="app.createNewBlueprint()">Crear Nuevo Blueprint</button>
+            <h5 id="title-newData"></h5>
+            <div id="blueprint-name-display"></div>
+            <div id="blueprint-info"></div>
         </div>
         
         <div class="col">
@@ -43,8 +47,7 @@
                     <h3 id="blueprint-name" class="cust">Blueprint Canvas</h3>
                     <canvas id="canvas" width="500" height="500" class="border border-dark mt-3"></canvas>
                     <div class="btn-group" role="group">
-                        <button type="button" class="btn custom-save" onclick="app.saveBlueprint()">Save</button>
-                        <button type="button" class="btn custom-update" onclick="app.updateBlueprint()">Update</button>
+                        <button type="button" class="btn custom-update" onclick="app.updateSaveBlueprint()">Update/save</button>
                         <button type="button" class="btn custom-delete" onclick="app.deleteBlueprint()">Eliminar</button>                       
                     </div>
                 </div>
