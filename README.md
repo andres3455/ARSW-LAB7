@@ -25,47 +25,18 @@
 	2. Se haga GET al recurso /blueprints, para obtener de nuevo todos los planos realizados.
 	3. Se calculen nuevamente los puntos totales del usuario.
 
-```
-function updateSaveBlueprint() {
-        if (!author || !blueprintName) {
-            alert("No blueprint selected.");
-            return;
-        }
-    
-        var blueprintData = {
-            author: author,
-            points: currentCanvasPoints,
-            name: blueprintName
-        };
-    
-        if (newBlueprintInProgress) {
-            if (currentCanvasPoints.length === 0) {
-                alert("The blueprint must have at least one point before saving.");
-                return;
-            }
-    
-            apiFunction.createBlueprint(blueprintData, function (updatedBlueprints) {
-                blueprints = updatedBlueprints.map(function (blueprint) {
-                    return { name: blueprint.name, points: blueprint.points };
-                });
-                clear();
-                updateBlueprintTable();
-                alert("Blueprint added successfully");
-            });
-    
-            newBlueprintInProgress = false; // Marcar como guardado
-        } else {
-            apiFunction.updateBlueprint(author, blueprintName, blueprintData, function (updatedBlueprints) {
-                blueprints = updatedBlueprints.map(function (blueprint) {
-                    return { name: blueprint.name, points: blueprint.points };
-                });
-                updateBlueprintTable();
-                alert("Blueprint updated successfully");
-            });
-        }
-    }
+![image](https://github.com/user-attachments/assets/b5531e80-21e5-42d5-bbef-f06396f967d7)
 
-```
+## Evidencias
+
+![Captura de pantalla 2025-03-17 194424](https://github.com/user-attachments/assets/a66e53e4-5550-43d2-97f7-3787715bb7fd)
+
+![Captura de pantalla 2025-03-17 194433](https://github.com/user-attachments/assets/da7acff6-fc0d-4176-99f4-5f243ee8f3a0)
+
+![Captura de pantalla 2025-03-17 194504](https://github.com/user-attachments/assets/c2e400e0-cab7-42c6-998b-4c63c6bb2746)
+
+
+
 
 	Para lo anterior tenga en cuenta:
 
