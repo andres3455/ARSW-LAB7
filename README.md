@@ -61,17 +61,22 @@
 6. Agregue el botón 'Create new blueprint', de manera que cuando se oprima: 
 	* Se borre el canvas actual.
 	* Se solicite el nombre del nuevo 'blueprint' (usted decide la manera de hacerlo).
-	
+	![](img/1.png)
+   	![](img/2.png)
+   	![](img/2.5.png)
 	Esta opción debe cambiar la manera como funciona la opción 'save/update', pues en este caso, al oprimirse la primera vez debe (igualmente, usando promesas):
 
 	1. Hacer POST al recurso /blueprints, para crear el nuevo plano.
+   		![](img/3.png)
 	2. Hacer GET a este mismo recurso, para actualizar el listado de planos y el puntaje del usuario.
+		![](img/4.png)
 
 7. Agregue el botón 'DELETE', de manera que (también con promesas):
 	* Borre el canvas.
 	* Haga DELETE del recurso correspondiente.
 	* Haga GET de los planos ahora disponibles.
 
+   ![](img/5.png)
 ### Criterios de evaluación
 
 1. Funcional

@@ -1,11 +1,11 @@
-var app = (function () {
+var app = (function() {
     var author = "";
     var blueprintName = "";
     var blueprints = [];
     var currentCanvasPoints = [];
     var canvas = null;
     var ctx = null;
-    var apiFunction = apimock;
+    var apiFunction = apiclient;
     var newBlueprintInProgress = false;
 
     function setAuthorName(authorName) {
@@ -14,40 +14,48 @@ var app = (function () {
 
     function updateBlueprintTable() {
         $("#blueprint-table tbody").empty();
-        blueprints.forEach(function (blueprint) {
-            var newRow = "<tr><td>" + blueprint.name + "</td><td>" + blueprint.points.length +
-                "</td><td><button id='" + encodeURIComponent(blueprint.name) +
-                "' onclick='app.getBlueprintsByAuthorAndName(this)'>Open</button></td></tr>";
+        blueprints.forEach(function(blueprint) {
+            var newRow = `<tr>
+                <td>${blueprint.name}</td>
+                <td>${blueprint.points.length}</td>
+                <td><button id="${encodeURIComponent(blueprint.name)}" onclick="app.getBlueprintsByAuthorAndName(this)">Open</button></td>
+            </tr>`;
             $("#blueprint-table tbody").append(newRow);
         });
 
         var totalPoints = blueprints.reduce((acc, blueprint) => acc + blueprint.points.length, 0);
-        $("#total-points").text("Total user points: " + totalPoints);
+        $("#total-points").text(`Total user points: ${totalPoints}`);
     }
 
     function getBlueprintsByAuthor() {
-        clear();
-        author = $("#author").val();
+        clearCanvas();
+        author = $("#author").val().trim();
         if (!author) {
             alert("Please enter an author");
             return;
         }
 
-        apiFunction.getBlueprintsByAuthor(author, function (data) {
-            if (data) {
-                blueprints = data.map(bp => ({ name: bp.name, points: bp.points }));
-                $("#author-content").text(author + "'s blueprints: ");
-                updateBlueprintTable();
-            } else {
-                alert("Author not found.");
-            }
-        });
+        apiFunction.getBlueprintsByAuthor(author)
+            .then(data => {
+                if (data && data.length > 0) {
+                    blueprints = data.map(bp => ({ name: bp.name, points: bp.points }));
+                    $("#author-content").text(`${author}'s blueprints:`);
+                    updateBlueprintTable();
+                } else {
+                    alert("Author not found or no blueprints available.");
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching blueprints:", error);
+                alert("Failed to retrieve blueprints.");
+            });
     }
 
     function drawBlueprint() {
-        if (!ctx) return; // Evita errores si el contexto no está inicializado
+        if (!ctx) initCanvas();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.beginPath();
+
         currentCanvasPoints.forEach((point, index) => {
             if (index === 0) {
                 ctx.moveTo(point.x, point.y);
@@ -55,6 +63,7 @@ var app = (function () {
                 ctx.lineTo(point.x, point.y);
             }
         });
+
         ctx.stroke();
     }
 
@@ -65,15 +74,14 @@ var app = (function () {
             return;
         }
 
-        let blueprintName = decodeURIComponent(selectedBp.id);
-        apiFunction.getBlueprintsByNameAndAuthor(author, blueprintName, function (data) {
-            if (data) {
+        blueprintName = decodeURIComponent(selectedBp.id);
+
+        apiFunction.getBlueprintsByNameAndAuthor(author, blueprintName)
+            .then(data => {
                 currentCanvasPoints = data.points;
                 drawBlueprint();
-            } else {
-                alert("Blueprint not found.");
-            }
-        });
+            })
+            .catch(() => alert("Blueprint not found."));
     }
 
     function updateSaveBlueprint() {
@@ -81,40 +89,43 @@ var app = (function () {
             alert("No blueprint selected.");
             return;
         }
-    
+
         var blueprintData = {
             author: author,
             points: currentCanvasPoints,
             name: blueprintName
         };
-    
+
         if (newBlueprintInProgress) {
             if (currentCanvasPoints.length === 0) {
                 alert("The blueprint must have at least one point before saving.");
                 return;
             }
-    
-            apiFunction.createBlueprint(blueprintData, function (updatedBlueprints) {
-                blueprints = updatedBlueprints.map(function (blueprint) {
-                    return { name: blueprint.name, points: blueprint.points };
-                });
-                clear();
-                updateBlueprintTable();
-                alert("Blueprint added successfully");
-            });
-    
-            newBlueprintInProgress = false; // Marcar como guardado
+
+            apiFunction.createBlueprint(blueprintData)
+                .then(() => {
+                    alert("Blueprint added successfully");
+                    newBlueprintInProgress = false;
+                    return apiFunction.getBlueprintsByAuthor(author);
+                })
+                .then(data => {
+                    blueprints = data.map(bp => ({ name: bp.name, points: bp.points }));
+                    updateBlueprintTable();
+                })
+                .catch(() => alert("Error adding blueprint."));
         } else {
-            apiFunction.updateBlueprint(author, blueprintName, blueprintData, function (updatedBlueprints) {
-                blueprints = updatedBlueprints.map(function (blueprint) {
-                    return { name: blueprint.name, points: blueprint.points };
-                });
-                updateBlueprintTable();
-                alert("Blueprint updated successfully");
-            });
+            apiFunction.updateBlueprint(author, blueprintName, blueprintData)
+                .then(() => {
+                    alert("Blueprint updated successfully");
+                    return apiFunction.getBlueprintsByAuthor(author);
+                })
+                .then(data => {
+                    blueprints = data.map(bp => ({ name: bp.name, points: bp.points }));
+                    updateBlueprintTable();
+                })
+                .catch(() => alert("Error updating blueprint."));
         }
     }
-    
 
     function initCanvas() {
         canvas = document.getElementById("canvas");
@@ -133,15 +144,7 @@ var app = (function () {
             }
         }
 
-        if (window.PointerEvent) {
-            canvas.addEventListener("pointerdown", addPoint);
-        } else {
-            canvas.addEventListener("mousedown", addPoint);
-            canvas.addEventListener("touchstart", function (event) {
-                event.preventDefault();
-                addPoint(event.touches[0]);
-            });
-        }
+        canvas.addEventListener("pointerdown", addPoint);
     }
 
     function createNewBlueprint() {
@@ -158,10 +161,8 @@ var app = (function () {
         blueprintName = newName;
         newBlueprintInProgress = true;
 
-        $("#title-newData").text("New Blueprint Data:");
-        $("#blueprint-name-display").text("Blueprint Name: " + blueprintName);
+        $("#blueprint-name-display").text(`Blueprint Name: ${blueprintName}`);
         $("#blueprint-info").text("You can add points to the new blueprint using the canvas. Click Save/Update when done.");
-        $("#blueprint-name").text(blueprintName);
     }
 
     function deleteBlueprint() {
@@ -169,32 +170,21 @@ var app = (function () {
             alert("Author or Blueprint not selected!");
             return;
         }
+
         apiFunction.deleteBlueprint(author, blueprintName)
-            .then(() => apiFunction.getBlueprintsByAuthor(author))
+            .then(() => {
+                alert("Blueprint successfully deleted.");
+                return apiFunction.getBlueprintsByAuthor(author);
+            })
             .then(newBlueprints => {
                 blueprints = newBlueprints.map(bp => ({ name: bp.name, points: bp.points }));
-                clear();
                 updateBlueprintTable();
-                alert("Blueprint successfully deleted.");
             })
             .catch(() => alert("Error deleting blueprint."));
     }
 
-    function clear() {
-        clearCanvas();
-        $("#author-content").text("Author Name");
-        $("#total-points").text("Total user points: ");
-        $("#blueprint-table tbody").empty();
-        $("#blueprint-name").text("Blueprint Name");
-        $("#title-newData").text("");
-        $("#blueprint-name-display").text("");
-        $("#blueprint-info").text("");
-    }
-
     function clearCanvas() {
-        if (!ctx) {
-            initCanvas(); // Asegura que el contexto esté inicializado antes de limpiar
-        }
+        if (!ctx) initCanvas();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         currentCanvasPoints = [];
         blueprintName = "";

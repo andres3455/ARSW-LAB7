@@ -71,4 +71,14 @@ public class BlueprintsServices {
             lock.writeLock().unlock();
         }
     }
+
+    public void deleteBlueprint(String author, String bpname) throws BlueprintNotFoundException {
+        lock.writeLock().lock();
+        try {
+            bpp.deleteBlueprint(author, bpname);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
 }
